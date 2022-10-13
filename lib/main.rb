@@ -2,35 +2,13 @@
 # frozen_string_literal: true
 
 require 'json'
-
-class DataMatch
-  def initialize(data)
-    @data = data
-  end
-
-  def to_s
-    "#{@data}"
-  end
-end
+require_relative 'data_match'
+require_relative 'match'
 
 class Begin < DataMatch
   def to_s
     "#{@data}\n\t#{@data.keys}"
     "\tpath: #{@data['path']}"
-  end
-end
-
-class Match < DataMatch
-  def to_s
-    s = <<-STRING
-    \tpath: #{@data['path']}
-    \tlines: #{@data['lines']}
-    \tline_number: #{@data['line_number']}
-    \tabsolute_offset: #{@data['absolute_offset']}
-    \tsubmatches: #{@data['submatches']}
-    STRING
-    "#{@data}\n\t#{@data.keys}"
-    s
   end
 end
 
