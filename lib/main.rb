@@ -5,13 +5,22 @@ require 'json'
 require_relative 'data_match'
 require_relative 'match'
 
+# Begin
+# properties:
+# path
 class Begin < DataMatch
   def to_s
-    "#{@data}\n\t#{@data.keys}"
+    # "type BEGIN: #{@data}\n\t#{@data.keys}"
+    "type BEGIN: #{@data.keys}"
     "\tpath: #{@data['path']}"
   end
 end
 
+# End
+# properties:
+# path
+# binary_offset
+# stats
 class End < DataMatch
   def to_s
     s = <<-STRING
@@ -19,43 +28,56 @@ class End < DataMatch
     \tbinary_offset: #{@data['binary_offset']}
     \tstats: #{@data['stats']}
     STRING
+    # "type END: #{@data}\n\t#{@data.keys}"
+    "type END: #{@data.keys}"
     s
   end
 end
 
+# Summary
 class Summary < DataMatch
   def to_s
     s = <<-STRING
     \telapsed_total: #{@data['elapsed_total']}
     \tstats: #{@data['stats']}
     STRING
-    "#{@data}\n\t#{@data.keys}"
+    # "type SUMMARY: #{@data}\n\t#{@data.keys}"
+    "type SUMMARY: #{@data.keys}"
     s
   end
 end
 
-
 # Node models a match from rg --json
 class Node
-  def initialize(match)
-    d = JSON.parse(match)
-    t = d['type']
-    klass = dataKlass(t, d['data'])
-    @raw_data = klass.new(d['data'])
+  def initialize(matches)
+
+    @matches = []
+
+    matches.each do |match|
+      case match['type']
+      when 'begin'
+        @begin_data = Begin.new(match['data'])
+      when 'match'
+        @matches << Match.new(match['data'])
+      when 'end'
+        @end_data = End.new(match['data'])
+      end
+    end
   end
 
-  def dataKlass(t, d)
-    if t == 'begin'
+  def dataKlass(t, _d)
+    case t
+    when 'begin'
       Begin
-    elsif t == 'match'
+    when 'match'
       Match
-    elsif t == 'end'
+    when 'end'
       End
-    elsif t == 'summary'
+    when 'summary'
       Summary
     else
       puts t
-      1/0
+      1 / 0
     end
   end
 
@@ -64,16 +86,47 @@ class Node
   end
 
   def to_s
-    "type: #{@raw_data.class}\n#{@raw_data}\n\n"
+    # "type: #{@raw_data.class}\n#{@raw_data}\n\n"
+    # matches_string = @matches.reduce("---\n") { _1 + "#{_2}\n--------\n\t" }
+    matches_string = @matches.reduce("\n") { _1 + "#{_2}\n" }
+    # "node\n\tbegin_data: #{@begin_data}\n\tmatches (#{@matches.count}): #{@matches}\n\tend_data#{@end_data}\n"
+    "node\n\tbegin_data: #{@begin_data}\n\tMATCHES (#{@matches.count}): \n#{matches_string}\n\tend_data#{@end_data}\n"
+  end
+end
+
+class Nodes
+  def initialize(lines)
+    grouped_lines = []
+    aux = []
+    lines.each do |line_string|
+      line = JSON.parse line_string
+      case line['type']
+      when 'begin'
+        aux << line
+      when 'match'
+        aux << line
+      when 'end'
+        aux << line
+        grouped_lines << aux
+        aux = []
+      when 'summary'
+        @summary = Summary.new(line['data'])
+      else
+        puts line
+        1 / 0
+      end
+    end
+    @nodes = grouped_lines.map { Node.new(_1) }
+  end
+
+  def to_s
+    @nodes.reduce('') { _1 + _2.to_s }
   end
 end
 
 def run(lines)
-  matches = lines.map { Node.parse(_1) }
-
-  matches.each do |match|
-    puts match
-  end
+  nodes = Nodes.new(lines)
+  puts nodes
 end
 
 run(ARGF.readlines)
