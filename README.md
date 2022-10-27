@@ -16,3 +16,28 @@ Some cool TUI libraries are available for other languages:
 
 If somebody founds something like this but for Ruby, leave a comment in any section and I will resume this project.
 
+# USAGE EXAMPLES
+
+Run this commands and compare the output. Ensure you have ripgrep installed on yout system before running the following
+examples:
+
+> rg def
+
+This will search all `def` words inside this folder. ie, all places where a function is defined. Take a look at the
+output: it shows you the name of the file where there is one or more matches, and then it shows you in which line of the
+file is the match.
+
+> rg def --json
+
+This will do the same search as above, but the format is JSON. This is so difficult for humands to read, but this data
+is easy to parse, and you can parse it in almost every programming language. It has much more details than the command
+ran before.
+
+> rg def --json | ruby lib/main.rb
+
+This will run the previous search, but the output is piped to the main file of this project. Take a look at the output:
+each one of the nodes (the lines starting with "{....}") is parsed by `main.rb`, internally a data structure is created,
+and finally the matches are printed in STDOUT. I am using tabs to put some order here. But I think a nice TUI for Ruby
+may help us print the results prettier. But I have not found anyone up until now. That's the reason why I will put all
+my efforts on the other project `rg_wrapper` written in rust.
+
