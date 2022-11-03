@@ -10,6 +10,12 @@ require 'tty-prompt'
 # properties:
 # path
 class Begin < DataMatch
+  def initialize(data)
+    @data = data
+  end
+  def file_name
+    @data['path']['text']
+  end
   def to_s
     # "type BEGIN: #{@data}\n\t#{@data.keys}"
     "type BEGIN: #{@data.keys}"
@@ -62,6 +68,39 @@ class Node
         @matches << Match.new(match['data'])
       when 'end'
         @end_data = End.new(match['data'])
+      end
+    end
+  end
+
+  def name_file
+    # "@begin_data = #{@begin_data.inspect}\n@matches = #{@matches.inspect}\n@end_data = #{@end_data.inspect}"
+    # @begin_data['path']['text']
+    @begin_data.file_name
+  end
+
+  def summary
+    "PENDING"
+  end
+
+  def action
+    prompt = TTY::Prompt.new
+    while true
+      choices = [
+        { name: 'View name of the file', value: 1 },
+        { name: 'View matches', value: 2 },
+        { name: 'Quit', value: 'q' }
+      ]
+      option = prompt.enum_select('Select an option', choices)
+      puts "option: #{option.inspect}"
+      if option == 1
+        puts @begin_data.file_name
+      elsif option == 2
+        @matches.each do |match|
+          match.action
+          # puts match.inspect
+        end
+      else
+        break
       end
     end
   end
@@ -120,6 +159,37 @@ class Nodes
     @nodes = grouped_lines.map { Node.new(_1) }
   end
 
+  def menu
+    prompt = TTY::Prompt.new
+    while true
+      choices = [
+        { name: 'View names of files', value: 1 },
+        { name: 'View summary', value: 2 },
+        { name: 'Take action', value: 3 },
+        { name: 'Quit', value: 'q' }
+      ]
+      option = prompt.enum_select('Select an option', choices)
+      puts "option: #{option.inspect}"
+      if option == 1
+        # puts @nodes.reduce('') { _1 + _2.to_s }
+        @nodes.each do |node|
+          puts node.name_file
+        end
+      elsif option == 2
+        @nodes.each do |node|
+          puts node.summary
+        end
+      elsif option == 3
+        @nodes.each do |node|
+          puts node.action
+        end
+      else
+        break
+      end
+    end
+
+  end
+
   def to_s
     @nodes.reduce('') { _1 + _2.to_s }
   end
@@ -137,31 +207,32 @@ class IOUtils
 end
 
 def run()
+  prompt = TTY::Prompt.new
   while true
-    prompt = TTY::Prompt.new
     choices = [
-      {name: "Use example rg def --jsonsmall", value: 1},
-      {name: "Run your own command", value: 2,},
-      {name: "Quit", value: "q",},
+      { name: 'Use example rg def --json', value: 1 },
+      { name: 'Use example rg run --json', value: 2 },
+      { name: 'Run your own command', value: 3 },
+      { name: 'Quit', value: "q" }
     ]
     option = prompt.enum_select("Select an option", choices)
     puts "option: #{option.inspect}"
     # break
-    if option == "1"
+    if option == 1
       io = IOUtils.new
       cmd = 'rg def --json'.split
-      lines = io.getCmdData(cmd).split("\n")
-      nodes = Nodes.new(lines)
-      puts nodes
+    elsif option == 2
+      io = IOUtils.new
+      cmd = 'rg run --json'.split
     elsif option == "q"
       break
     else
       cmd = gets().chomp
-      io = IOUtils.new
-      lines = io.getCmdData(cmd).split("\n")
-      nodes = Nodes.new(lines)
-      puts nodes
     end
+    lines = io.getCmdData(cmd).split("\n")
+    nodes = Nodes.new(lines)
+    nodes.menu
+    # puts nodes
   end
 end
 
