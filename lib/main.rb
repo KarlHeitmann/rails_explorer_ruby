@@ -4,6 +4,7 @@
 require 'json'
 require_relative 'data_match'
 require_relative 'match'
+require 'tty-prompt'
 
 # Begin
 # properties:
@@ -124,9 +125,45 @@ class Nodes
   end
 end
 
-def run(lines)
-  nodes = Nodes.new(lines)
-  puts nodes
+# IOUtils is used to retrieve data fro IO sucprocess with only one command HACK_ME
+class IOUtils
+  def getCmdData(cmd)
+    io = IO.popen(cmd)
+    data = io.read
+    io.close
+    # raise 'it failed!' unless $?.exitstatus == 0
+    data
+  end
 end
 
-run(ARGF.readlines)
+def run()
+  while true
+    prompt = TTY::Prompt.new
+    choices = [
+      {name: "Use example rg def --jsonsmall", value: 1},
+      {name: "Run your own command", value: 2,},
+      {name: "Quit", value: "q",},
+    ]
+    option = prompt.enum_select("Select an option", choices)
+    puts "option: #{option.inspect}"
+    # break
+    if option == "1"
+      io = IOUtils.new
+      cmd = 'rg def --json'.split
+      lines = io.getCmdData(cmd).split("\n")
+      nodes = Nodes.new(lines)
+      puts nodes
+    elsif option == "q"
+      break
+    else
+      cmd = gets().chomp
+      io = IOUtils.new
+      lines = io.getCmdData(cmd).split("\n")
+      nodes = Nodes.new(lines)
+      puts nodes
+    end
+  end
+end
+
+run()
+
