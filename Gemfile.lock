@@ -34,6 +34,7 @@ DEPENDENCIES
   tty-box
   tty-option
   tty-prompt
+  tty-screen
 
 BUNDLED WITH
    2.1.4
