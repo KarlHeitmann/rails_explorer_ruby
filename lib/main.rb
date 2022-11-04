@@ -3,8 +3,8 @@
 
 require 'json'
 require_relative 'command'
-require_relative 'nodes'
-require_relative 'node'
+require_relative 'explorer'
+# require_relative 'node'
 require 'tty-prompt'
 require 'tty-box'
 require 'tty-screen'
@@ -37,7 +37,7 @@ def run
     io = IOUtils.new
     cmd = 'rg run --json'.split
     lines = io.getCmdData(cmd).split("\n")
-    nodes = Nodes.new(lines)
+    nodes = Explorer::Nodes.new(lines)
     nodes.autopilot
   else
     prompt = TTY::Prompt.new
@@ -64,7 +64,7 @@ def run
         cmd = gets.chomp
       end
       lines = io.getCmdData(cmd).split("\n")
-      nodes = Nodes.new(lines)
+      nodes = Explorer::Nodes.new(lines)
       nodes.menu
       # puts nodes
     end
