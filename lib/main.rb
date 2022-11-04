@@ -4,7 +4,9 @@
 require 'json'
 require_relative 'data_match'
 require_relative 'match'
+require_relative 'command'
 require 'tty-prompt'
+require 'tty-box'
 
 # Begin
 # properties:
@@ -13,9 +15,11 @@ class Begin < DataMatch
   def initialize(data)
     @data = data
   end
+
   def file_name
     @data['path']['text']
   end
+
   def to_s
     # "type BEGIN: #{@data}\n\t#{@data.keys}"
     "type BEGIN: #{@data.keys}"
@@ -57,7 +61,6 @@ end
 # Node models a match from rg --json
 class Node
   def initialize(matches)
-
     @matches = []
 
     matches.each do |match|
@@ -79,12 +82,12 @@ class Node
   end
 
   def summary
-    "PENDING"
+    'PENDING'
   end
 
   def action
     prompt = TTY::Prompt.new
-    while true
+    loop do
       choices = [
         { name: 'View name of the file', value: 1 },
         { name: 'View matches', value: 2 },
@@ -92,13 +95,11 @@ class Node
       ]
       option = prompt.enum_select('Select an option', choices)
       puts "option: #{option.inspect}"
-      if option == 1
+      case option
+      when 1
         puts @begin_data.file_name
-      elsif option == 2
-        @matches.each do |match|
-          match.action
-          # puts match.inspect
-        end
+      when 2
+        @matches.each(&:action)
       else
         break
       end
@@ -135,7 +136,7 @@ class Node
 end
 
 class Nodes
-  def initialize(lines)
+  def initialize(lines, autopilot=false)
     grouped_lines = []
     aux = []
     lines.each do |line_string|
@@ -159,9 +160,18 @@ class Nodes
     @nodes = grouped_lines.map { Node.new(_1) }
   end
 
+  def autopilot
+    @nodes.each do |node|
+      puts node.name_file
+    end
+  end
+
   def menu
     prompt = TTY::Prompt.new
-    while true
+    box = TTY::Box.frame(width: 30, height: 10) do
+      "Drawin a box in terminal emulator"
+    end
+    loop do
       choices = [
         { name: 'View names of files', value: 1 },
         { name: 'View summary', value: 2 },
@@ -170,16 +180,17 @@ class Nodes
       ]
       option = prompt.enum_select('Select an option', choices)
       puts "option: #{option.inspect}"
-      if option == 1
+      case option
+      when 1
         # puts @nodes.reduce('') { _1 + _2.to_s }
         @nodes.each do |node|
           puts node.name_file
         end
-      elsif option == 2
+      when 2
         @nodes.each do |node|
           puts node.summary
         end
-      elsif option == 3
+      when 3
         @nodes.each do |node|
           puts node.action
         end
@@ -187,7 +198,6 @@ class Nodes
         break
       end
     end
-
   end
 
   def to_s
@@ -206,35 +216,54 @@ class IOUtils
   end
 end
 
-def run()
-  prompt = TTY::Prompt.new
-  while true
-    choices = [
-      { name: 'Use example rg def --json', value: 1 },
-      { name: 'Use example rg run --json', value: 2 },
-      { name: 'Run your own command', value: 3 },
-      { name: 'Quit', value: "q" }
-    ]
-    option = prompt.enum_select("Select an option", choices)
-    puts "option: #{option.inspect}"
-    # break
-    if option == 1
-      io = IOUtils.new
-      cmd = 'rg def --json'.split
-    elsif option == 2
-      io = IOUtils.new
-      cmd = 'rg run --json'.split
-    elsif option == "q"
-      break
-    else
-      cmd = gets().chomp
-    end
+def clear_screen
+  puts "\e[H\e[2J"
+end
+
+def run
+  # clear_screen
+  cmd = Command.new
+  cmd.parse
+  cmd.run
+  puts cmd.params
+  # puts cmd.help
+  puts cmd.params[:autopilot]
+  if cmd.params[:autopilot]
+    io = IOUtils.new
+    cmd = 'rg run --json'.split
     lines = io.getCmdData(cmd).split("\n")
     nodes = Nodes.new(lines)
-    nodes.menu
-    # puts nodes
+    nodes.autopilot
+  else
+    prompt = TTY::Prompt.new
+    loop do
+      choices = [
+        { name: 'Use example rg def --json', value: 1 },
+        { name: 'Use example rg run --json', value: 2 },
+        { name: 'Run your own command', value: 3 },
+        { name: 'Quit', value: 'q' }
+      ]
+      option = prompt.enum_select('Select an option', choices)
+      puts "option: #{option.inspect}"
+      # break
+      case option
+      when 1
+        io = IOUtils.new
+        cmd = 'rg def --json'.split
+      when 2
+        io = IOUtils.new
+        cmd = 'rg run --json'.split
+      when 'q'
+        break
+      else
+        cmd = gets.chomp
+      end
+      lines = io.getCmdData(cmd).split("\n")
+      nodes = Nodes.new(lines)
+      nodes.menu
+      # puts nodes
+    end
   end
 end
 
-run()
-
+run
