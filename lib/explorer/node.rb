@@ -32,6 +32,11 @@ module Explorer
       @begin_data.file_name
     end
 
+    def matches(size)
+      # puts @matches[0].display_all
+      @matches.reduce('') { _1 + _2.display_all + "\n" }
+    end
+
     def summary
       # 'PENDING'
       to_s

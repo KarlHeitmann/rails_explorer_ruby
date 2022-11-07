@@ -35,7 +35,8 @@ def run
   puts cmd.params[:autopilot]
   if cmd.params[:autopilot]
     io = IOUtils.new
-    cmd = 'rg run --json'.split
+    # cmd = 'rg run --json'.split
+    cmd = 'rg def --json'.split
     lines = io.getCmdData(cmd).split("\n")
     nodes = Explorer::Nodes.new(lines)
     nodes.autopilot

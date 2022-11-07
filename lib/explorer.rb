@@ -29,7 +29,7 @@ module Explorer
           # @summary = Summary.new(line['data'])
           @summary = line['data']
         else
-          puts line
+          # puts line
           1 / 0
         end
       end
@@ -46,35 +46,43 @@ module Explorer
         choices << { name: node.name_file, value: i + 0}
       end
       choices << { name: 'Quit', value: 'q' }
-      box = TTY::Box.frame(width: 30, height: 10) { text_to_display }
+      box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2) { text_to_display }
       # { choices: choices, box: box }
       [ choices, box ]
     end
 
     def autopilot
       choices, box = summary_box
-      puts screen_width
-      detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: 10) { "" }
+      # puts screen_width
+      max_height = choices.size
+      detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: max_height + 2) { "" }
+      # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: max_height + 2) { "" }
+      # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: 10) { "" }
       # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: 10) { "" }
       # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: 10) { "" }
       loop do
         clear_screen
+        # puts "choices.size = #{choices.size}\tmax_height = #{max_height}"
         print box
         print detail
+        puts
         prompt = TTY::Prompt.new
         option = prompt.enum_select('Select an option', choices)  
         break if option == 'q'
+        text_detail = @nodes[option].matches(screen_width)
+        max_height = [choices.size, text_detail.count("\n") - 1].max
         # detail = TTY::Box.frame(top: 0, left: @columns - 30, width: 30, height: 10) { @nodes[option].name_file }
         # detail = TTY::Box.frame(top: 0, left: @columns - 30, width: 30, height: 10) { @nodes[option].summary }
-        detail = TTY::Box.frame(top: 0, left: 31, width: screen_width - 32) { @nodes[option].inspect }
-        puts @nodes[option].inspect
+        # detail = TTY::Box.frame(top: 0, left: 31, width: screen_width - 32) { @nodes[option].inspect }
+        detail = TTY::Box.frame(top: 0, left: 31, width: screen_width - 32, height: max_height + 2) { text_detail }
+        # puts @nodes[option].inspect
 =begin
         clear_screen
         print box
         print detail
         gets
-=end
         break
+=end
         # detail = TTY::Box.frame(top: 0, left: @columns - 30, width: 30, height: 10) { @nodes[option].action }
       end
     end
@@ -92,7 +100,7 @@ module Explorer
           { name: 'Quit', value: 'q' }
         ]
         option = prompt.enum_select('Select an option', choices)
-        puts "option: #{option.inspect}"
+        # puts "option: #{option.inspect}"
         case option
         when 1
           # puts @nodes.reduce('') { _1 + _2.to_s }

@@ -42,6 +42,10 @@ module Explorer
           end
         end
       end
+
+      def display_all
+        @data['lines'].to_s
+      end
       #   def to_s
       #     s = <<-STRING
       #     \tMATCH
