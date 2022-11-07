@@ -1,7 +1,8 @@
 module Explorer
   class Node
     class DataMatch
-      def initialize(data)
+      def initialize(data, explorer_data: )
+        @explorer_data = explorer_data
         @data = data
       end
 
@@ -44,7 +45,15 @@ module Explorer
       end
 
       def display_all
-        @data['lines'].to_s
+        # @data['lines'].to_s
+        # ss = @data['lines']['text'].chomp.split(@explorer_data)
+        ss = @data['lines']['text'].split(@explorer_data)
+        "#{(ss[0...-1].map { _1 + red(@explorer_data) } + [ss[-1]]).join}".chomp
+        # "#{ss[0...-1].map { _1 + @explorer_data }} + #{ss[-1])}".chomp
+
+        # "#{ss[0]}#{red(@explorer_data)}#{ss[1..].joins}"
+        # "#{ss[0]}#{red(@explorer_data)}#{ss[1..].empty? ? "" : ss[1..].join}"
+        # "#{@explorer_data}#{red(@data['lines']['text'].chomp)}"
       end
       #   def to_s
       #     s = <<-STRING
@@ -64,9 +73,11 @@ module Explorer
     # properties:
     # path
     class Begin < DataMatch
-      def initialize(data)
+=begin
+      def initialize(data, )
         @data = data
       end
+=end
 
       def file_name
         @data['path']['text']

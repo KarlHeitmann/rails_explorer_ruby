@@ -21,6 +21,14 @@ class IOUtils
   end
 end
 
+def colorize(text, color_code)
+  "\e[#{color_code}m#{text}\e[0m"
+end
+
+def red(text); colorize(text, 31); end
+def green(text); colorize(text, 32); end
+
+
 def clear_screen
   puts "\e[H\e[2J"
 end
@@ -35,10 +43,11 @@ def run
   puts cmd.params[:autopilot]
   if cmd.params[:autopilot]
     io = IOUtils.new
+    search_term = 'run'
     # cmd = 'rg run --json'.split
-    cmd = 'rg def --json'.split
+    cmd = "rg #{search_term} --json".split
     lines = io.getCmdData(cmd).split("\n")
-    nodes = Explorer::Nodes.new(lines)
+    nodes = Explorer::Nodes.new(lines, search_term)
     nodes.autopilot
   else
     prompt = TTY::Prompt.new
@@ -55,17 +64,18 @@ def run
       case option
       when 1
         io = IOUtils.new
-        cmd = 'rg def --json'.split
+        search_term = 'def'
       when 2
         io = IOUtils.new
-        cmd = 'rg run --json'.split
+        search_term = 'run'
       when 'q'
         break
       else
-        cmd = gets.chomp
+        search_term = gets.chomp
       end
+      cmd = "rg #{search_term} -s --json".split
       lines = io.getCmdData(cmd).split("\n")
-      nodes = Explorer::Nodes.new(lines)
+      nodes = Explorer::Nodes.new(lines, search_term)
       nodes.menu
       # puts nodes
     end

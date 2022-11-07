@@ -11,7 +11,8 @@ module Explorer
       @screen_width ||= self.class.tty_screen_width
     end
 
-    def initialize(lines, autopilot=false)
+    def initialize(lines, search_term, autopilot=false)
+      @search_term = search_term
       grouped_lines = []
       aux = []
       lines.each do |line_string|
@@ -33,7 +34,7 @@ module Explorer
           1 / 0
         end
       end
-      @nodes = grouped_lines.map { Node.new(_1) }
+      @nodes = grouped_lines.map { Node.new(_1, explorer_data: @search_term) }
       # @columns = TTY::Screen.columns
     end
 

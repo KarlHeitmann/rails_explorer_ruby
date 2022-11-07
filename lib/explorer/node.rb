@@ -5,17 +5,18 @@ require_relative 'node/data'
 # Node models a match from rg --json
 module Explorer
   class Node
-    def initialize(matches)
+    def initialize(matches, explorer_data: )
       @matches = []
+      @explorer_data = explorer_data
 
       matches.each do |match|
         case match['type']
         when 'begin'
-          @begin_data = Begin.new(match['data'])
+          @begin_data = Begin.new(match['data'], explorer_data: explorer_data)
         when 'match'
-          @matches << Match.new(match['data'])
+          @matches << Match.new(match['data'], explorer_data: explorer_data)
         when 'end'
-          @end_data = End.new(match['data'])
+          @end_data = End.new(match['data'], explorer_data: explorer_data)
         end
       end
     end
@@ -34,6 +35,7 @@ module Explorer
 
     def matches(size)
       # puts @matches[0].display_all
+      # @matches.reduce('') { _1 + red(_2.display_all) + "-------\n" }
       @matches.reduce('') { _1 + _2.display_all + "\n" }
     end
 
