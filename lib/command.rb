@@ -34,6 +34,12 @@ class Command
     desc "Restart policy to apply when a container exits"
   end
 
+  flag :quick do
+    short "-q"
+    long "--quick"
+    desc "Quick run"
+  end
+
   flag :help do
     short "-h"
     long "--help"

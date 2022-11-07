@@ -47,8 +47,8 @@ module Explorer
       def display_all
         # @data['lines'].to_s
         # ss = @data['lines']['text'].chomp.split(@explorer_data)
-        ss = @data['lines']['text'].split(@explorer_data)
-        "#{(ss[0...-1].map { _1 + red(@explorer_data) } + [ss[-1]]).join}".chomp
+        ss = @data['lines']['text'].split(@explorer_data[:search_term])
+        "#{(ss[0...-1].map { _1 + red(@explorer_data[:search_term]) } + [ss[-1]]).join}".chomp
         # "#{ss[0...-1].map { _1 + @explorer_data }} + #{ss[-1])}".chomp
 
         # "#{ss[0]}#{red(@explorer_data)}#{ss[1..].joins}"

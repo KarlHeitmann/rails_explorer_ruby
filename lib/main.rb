@@ -42,12 +42,15 @@ def run
   # puts cmd.help
   puts cmd.params[:autopilot]
   if cmd.params[:autopilot]
+    autopilot = cmd.params[:autopilot]
+    quick = cmd.params[:quick]
     io = IOUtils.new
     search_term = 'run'
     # cmd = 'rg run --json'.split
     cmd = "rg #{search_term} --json".split
     lines = io.getCmdData(cmd).split("\n")
-    nodes = Explorer::Nodes.new(lines, search_term)
+    explorer_data = { autopilot: autopilot, search_term: search_term, quick: quick  }
+    nodes = Explorer::Nodes.new(lines, explorer_data: explorer_data)
     nodes.autopilot
   else
     prompt = TTY::Prompt.new

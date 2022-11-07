@@ -11,8 +11,9 @@ module Explorer
       @screen_width ||= self.class.tty_screen_width
     end
 
-    def initialize(lines, search_term, autopilot=false)
-      @search_term = search_term
+    def initialize(lines, explorer_data:)
+      # @autopilot = autopilot
+      @explorer_data = explorer_data
       grouped_lines = []
       aux = []
       lines.each do |line_string|
@@ -34,7 +35,7 @@ module Explorer
           1 / 0
         end
       end
-      @nodes = grouped_lines.map { Node.new(_1, explorer_data: @search_term) }
+      @nodes = grouped_lines.map { Node.new(_1, explorer_data: explorer_data) }
       # @columns = TTY::Screen.columns
     end
 
@@ -52,39 +53,38 @@ module Explorer
       [ choices, box ]
     end
 
+    def individual_action(option)
+      clear_screen
+      choices = ["wena wena"]
+      prompt = TTY::Prompt.new
+      name_file = @nodes[option].name_file
+      puts
+      puts
+      option = prompt.enum_select("Select an option for #{name_file}", choices)  
+    end
+
     def autopilot
       choices, box = summary_box
-      # puts screen_width
       max_height = choices.size
-      detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: max_height + 2) { "" }
-      # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: max_height + 2) { "" }
-      # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: 10) { "" }
-      # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: 10) { "" }
-      # detail = TTY::Box.frame(top: 0, left: screen_width - 30, width: 30, height: 10) { "" }
+      clear_screen
+      print box
+      prompt = TTY::Prompt.new
+      option = prompt.enum_select('Select an option', choices)
+      text_detail = @nodes[option].matches(screen_width) # XXX Here we get the text to print in the right box below
+      detail = TTY::Box.frame(top: 0, left: 31, width: screen_width - 32, height: max_height + 2) { text_detail }
+      print detail
+
       loop do
-        clear_screen
-        # puts "choices.size = #{choices.size}\tmax_height = #{max_height}"
-        print box
-        print detail
         puts
         prompt = TTY::Prompt.new
         option = prompt.enum_select('Select an option', choices)  
         break if option == 'q'
-        text_detail = @nodes[option].matches(screen_width)
+        text_detail = @nodes[option].matches(screen_width) # XXX Here we get the text to print in the right box below
         max_height = [choices.size, text_detail.count("\n") - 1].max
-        # detail = TTY::Box.frame(top: 0, left: @columns - 30, width: 30, height: 10) { @nodes[option].name_file }
-        # detail = TTY::Box.frame(top: 0, left: @columns - 30, width: 30, height: 10) { @nodes[option].summary }
-        # detail = TTY::Box.frame(top: 0, left: 31, width: screen_width - 32) { @nodes[option].inspect }
         detail = TTY::Box.frame(top: 0, left: 31, width: screen_width - 32, height: max_height + 2) { text_detail }
-        # puts @nodes[option].inspect
-=begin
+        individual_action(option) unless @explorer_data[:quick]
         clear_screen
-        print box
-        print detail
-        gets
-        break
-=end
-        # detail = TTY::Box.frame(top: 0, left: @columns - 30, width: 30, height: 10) { @nodes[option].action }
+        print box + detail
       end
     end
 
