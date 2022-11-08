@@ -63,7 +63,11 @@ module Explorer
         choices << { name: node.name_file, value: i + 0}
       end
       choices << { name: 'Quit', value: 'q' }
-      box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2) { text_to_display }
+      title = @explorer_data[:search_term]
+      puts title
+      box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: title, bottom_right: "v1.0"}) { text_to_display }
+      # box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: "TITLE", bottom_right: "v1.0"}) { text_to_display }
+      # box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: @explorer_data[:search_term], bottom_right: "v1.0"}) { text_to_display }
       # { choices: choices, box: box }
       [ choices, box ]
     end
@@ -74,10 +78,23 @@ module Explorer
       if (file_name[0] == '_') and (file_name[-3..] == 'erb')
         clear_screen
         prompt = TTY::Prompt.new
-        choices = ["wena wena"]
-        puts
-        puts
-        option = prompt.enum_select("Select an option for #{complete_file_name}", choices)  
+        choices = [
+          { name: file_name, value: 1 },
+          { name: "Quite", value: 'q' },
+        ]
+        option = prompt.enum_select("====> Select an option for #{complete_file_name}", choices)  
+        unless option == 'q'
+=begin
+          explorer_child_data = {
+            search_term: "render.*#{file_name.split('.').first[1..]}",
+            path: @explorer_data[:path]
+          }
+=end
+          explorer_child_data = @explorer_data
+          explorer_child_data[:search_term] = "render.*#{file_name.split('.').first[1..]}"
+          explorer_child = Nodes.new(explorer_data: explorer_child_data)
+          explorer_child.menu
+        end
       end
     end
 
