@@ -2,131 +2,47 @@
 # frozen_string_literal: true
 
 require 'json'
-require_relative 'data_match'
-require_relative 'match'
+require_relative 'command'
+require_relative 'explorer'
+# require_relative 'node'
+require 'tty-prompt'
+require 'tty-box'
+require 'tty-screen'
 
-# Begin
-# properties:
-# path
-class Begin < DataMatch
-  def to_s
-    # "type BEGIN: #{@data}\n\t#{@data.keys}"
-    "type BEGIN: #{@data.keys}"
-    "\tpath: #{@data['path']}"
+# IOUtils is used to retrieve data fro IO sucprocess with only one command HACK_ME
+def colorize(text, color_code)
+  "\e[#{color_code}m#{text}\e[0m"
+end
+
+def red(text); colorize(text, 31); end
+def green(text); colorize(text, 32); end
+
+
+def clear_screen
+  puts "\e[H\e[2J"
+end
+
+def run
+  # clear_screen
+  cmd = Command.new
+  cmd.parse
+  cmd.run
+  puts cmd.params
+  # puts cmd.help
+  puts cmd.params[:autopilot]
+  if cmd.params[:autopilot]
+    autopilot = cmd.params[:autopilot]
+    quick = cmd.params[:quick]
+    search_term = 'run'
+    path = cmd.params[:path]
+    explorer_data = { autopilot: autopilot, search_term: search_term, quick: quick, path: path }
+    nodes = Explorer::Nodes.new(explorer_data: explorer_data)
+    nodes.autopilot
+  else
+    explorer_data = { autopilot: autopilot, search_term: cmd.params[:search_term], quick: quick, path: cmd.params[:path] }
+    nodes = Explorer::Nodes.new(explorer_data: explorer_data)
+    nodes.menu # TODO: Refactor to run
   end
 end
 
-# End
-# properties:
-# path
-# binary_offset
-# stats
-class End < DataMatch
-  def to_s
-    s = <<-STRING
-    \tpath: #{@data['path']}
-    \tbinary_offset: #{@data['binary_offset']}
-    \tstats: #{@data['stats']}
-    STRING
-    # "type END: #{@data}\n\t#{@data.keys}"
-    "type END: #{@data.keys}"
-    s
-  end
-end
-
-# Summary
-class Summary < DataMatch
-  def to_s
-    s = <<-STRING
-    \telapsed_total: #{@data['elapsed_total']}
-    \tstats: #{@data['stats']}
-    STRING
-    # "type SUMMARY: #{@data}\n\t#{@data.keys}"
-    "type SUMMARY: #{@data.keys}"
-    s
-  end
-end
-
-# Node models a match from rg --json
-class Node
-  def initialize(matches)
-
-    @matches = []
-
-    matches.each do |match|
-      case match['type']
-      when 'begin'
-        @begin_data = Begin.new(match['data'])
-      when 'match'
-        @matches << Match.new(match['data'])
-      when 'end'
-        @end_data = End.new(match['data'])
-      end
-    end
-  end
-
-  def dataKlass(t, _d)
-    case t
-    when 'begin'
-      Begin
-    when 'match'
-      Match
-    when 'end'
-      End
-    when 'summary'
-      Summary
-    else
-      puts t
-      1 / 0
-    end
-  end
-
-  def self.parse(match)
-    new(match)
-  end
-
-  def to_s
-    # "type: #{@raw_data.class}\n#{@raw_data}\n\n"
-    # matches_string = @matches.reduce("---\n") { _1 + "#{_2}\n--------\n\t" }
-    matches_string = @matches.reduce("\n") { _1 + "#{_2}\n" }
-    # "node\n\tbegin_data: #{@begin_data}\n\tmatches (#{@matches.count}): #{@matches}\n\tend_data#{@end_data}\n"
-    "node\n\tbegin_data: #{@begin_data}\n\tMATCHES (#{@matches.count}): \n#{matches_string}\n\tend_data#{@end_data}\n"
-  end
-end
-
-class Nodes
-  def initialize(lines)
-    grouped_lines = []
-    aux = []
-    lines.each do |line_string|
-      line = JSON.parse line_string
-      case line['type']
-      when 'begin'
-        aux << line
-      when 'match'
-        aux << line
-      when 'end'
-        aux << line
-        grouped_lines << aux
-        aux = []
-      when 'summary'
-        @summary = Summary.new(line['data'])
-      else
-        puts line
-        1 / 0
-      end
-    end
-    @nodes = grouped_lines.map { Node.new(_1) }
-  end
-
-  def to_s
-    @nodes.reduce('') { _1 + _2.to_s }
-  end
-end
-
-def run(lines)
-  nodes = Nodes.new(lines)
-  puts nodes
-end
-
-run(ARGF.readlines)
+run
