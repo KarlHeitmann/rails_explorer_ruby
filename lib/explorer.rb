@@ -30,7 +30,7 @@ module Explorer
       puts ":::::::"
       puts @explorer_data.inspect
       # 1/0
-      lines = rg_launch(@explorer_data[:search_term])
+      lines = rg_launch
       lines.each do |line_string|
         line = JSON.parse line_string
         case line['type']
@@ -69,19 +69,22 @@ module Explorer
     end
 
     def individual_action(option)
-      clear_screen
-      choices = ["wena wena"]
-      prompt = TTY::Prompt.new
-      name_file = @nodes[option].name_file
-      puts
-      puts
-      option = prompt.enum_select("Select an option for #{name_file}", choices)  
+      complete_file_name = @nodes[option].name_file
+      file_name = complete_file_name.split('/')[-1]
+      if (file_name[0] == '_') and (file_name[-3..] == 'erb')
+        clear_screen
+        prompt = TTY::Prompt.new
+        choices = ["wena wena"]
+        puts
+        puts
+        option = prompt.enum_select("Select an option for #{complete_file_name}", choices)  
+      end
     end
 
-    def rg_launch(search_term)
+    def rg_launch
       # lines = io.getCmdData(cmd).split("\n")
-      cmd = "rg #{search_term} --json".split
-      # puts search_term.inspect
+      cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
+      # puts @explorer_data[:search_term].inspect
       # puts cmd.join
       @io.getCmdData(cmd).split("\n")
     end
