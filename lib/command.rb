@@ -18,9 +18,14 @@ class Command
     EOS
   end
 
-  argument :image do
+  argument :search_term do
     required
-    desc "The name of the image to use"
+    desc "Search term"
+  end
+
+  argument :path do
+    optional
+    desc "Search term"
   end
 
   argument :command do

@@ -9,18 +9,7 @@ require 'tty-prompt'
 require 'tty-box'
 require 'tty-screen'
 
-
 # IOUtils is used to retrieve data fro IO sucprocess with only one command HACK_ME
-class IOUtils
-  def getCmdData(cmd)
-    io = IO.popen(cmd)
-    data = io.read
-    io.close
-    # raise 'it failed!' unless $?.exitstatus == 0
-    data
-  end
-end
-
 def colorize(text, color_code)
   "\e[#{color_code}m#{text}\e[0m"
 end
@@ -44,44 +33,15 @@ def run
   if cmd.params[:autopilot]
     autopilot = cmd.params[:autopilot]
     quick = cmd.params[:quick]
-    io = IOUtils.new
     search_term = 'run'
-    # cmd = 'rg run --json'.split
-    cmd = "rg #{search_term} --json".split
-    lines = io.getCmdData(cmd).split("\n")
-    explorer_data = { autopilot: autopilot, search_term: search_term, quick: quick  }
-    nodes = Explorer::Nodes.new(lines, explorer_data: explorer_data)
+    path = cmd.params[:path]
+    explorer_data = { autopilot: autopilot, search_term: search_term, quick: quick, path: path }
+    nodes = Explorer::Nodes.new(explorer_data: explorer_data)
     nodes.autopilot
   else
-    prompt = TTY::Prompt.new
-    loop do
-      choices = [
-        { name: 'Use example rg def --json', value: 1 },
-        { name: 'Use example rg run --json', value: 2 },
-        { name: 'Run your own command', value: 3 },
-        { name: 'Quit', value: 'q' }
-      ]
-      option = prompt.enum_select('Select an option', choices)
-      puts "option: #{option.inspect}"
-      # break
-      case option
-      when 1
-        io = IOUtils.new
-        search_term = 'def'
-      when 2
-        io = IOUtils.new
-        search_term = 'run'
-      when 'q'
-        break
-      else
-        search_term = gets.chomp
-      end
-      cmd = "rg #{search_term} -s --json".split
-      lines = io.getCmdData(cmd).split("\n")
-      nodes = Explorer::Nodes.new(lines, search_term)
-      nodes.menu
-      # puts nodes
-    end
+    explorer_data = { autopilot: autopilot, search_term: cmd.params[:search_term], quick: quick, path: cmd.params[:path] }
+    nodes = Explorer::Nodes.new(explorer_data: explorer_data)
+    nodes.menu # TODO: Refactor to run
   end
 end
 

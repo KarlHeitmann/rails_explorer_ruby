@@ -1,6 +1,16 @@
 require_relative 'explorer/node'
 
 module Explorer
+  class IOUtils
+    def getCmdData(cmd)
+      io = IO.popen(cmd)
+      data = io.read
+      io.close
+      # raise 'it failed!' unless $?.exitstatus == 0
+      data
+    end
+  end
+
   class Nodes
     def self.tty_screen_width
       # puts "bla bla bla"
@@ -11,11 +21,16 @@ module Explorer
       @screen_width ||= self.class.tty_screen_width
     end
 
-    def initialize(lines, explorer_data:)
+    def initialize(explorer_data:)
       # @autopilot = autopilot
+      @io = IOUtils.new
       @explorer_data = explorer_data
       grouped_lines = []
       aux = []
+      puts ":::::::"
+      puts @explorer_data.inspect
+      # 1/0
+      lines = rg_launch(@explorer_data[:search_term])
       lines.each do |line_string|
         line = JSON.parse line_string
         case line['type']
@@ -63,6 +78,14 @@ module Explorer
       option = prompt.enum_select("Select an option for #{name_file}", choices)  
     end
 
+    def rg_launch(search_term)
+      # lines = io.getCmdData(cmd).split("\n")
+      cmd = "rg #{search_term} --json".split
+      # puts search_term.inspect
+      # puts cmd.join
+      @io.getCmdData(cmd).split("\n")
+    end
+
     def autopilot
       choices, box = summary_box
       max_height = choices.size
@@ -89,30 +112,34 @@ module Explorer
     end
 
     def menu
+      puts "AAAAAAAAAA"
       prompt = TTY::Prompt.new
       box = TTY::Box.frame(width: 30, height: 10) do
         "Drawin a box in terminal emulator"
       end
       loop do
         choices = [
-          { name: 'View names of files', value: 1 },
-          { name: 'View summary', value: 2 },
-          { name: 'Take action', value: 3 },
+          { name: 'Autopilot', value: 1 },
+          { name: 'View names of files', value: 2 },
+          { name: 'View summary', value: 3 },
+          { name: 'Take action', value: 4 },
           { name: 'Quit', value: 'q' }
         ]
         option = prompt.enum_select('Select an option', choices)
         # puts "option: #{option.inspect}"
         case option
         when 1
+          autopilot
+        when 2
           # puts @nodes.reduce('') { _1 + _2.to_s }
           @nodes.each do |node|
             puts node.name_file
           end
-        when 2
+        when 3
           @nodes.each do |node|
             puts node.summary
           end
-        when 3
+        when 4
           @nodes.each do |node|
             puts node.action
           end
