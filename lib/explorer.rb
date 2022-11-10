@@ -167,7 +167,6 @@ module Explorer
 
     def menu
       box = summary_box
-      puts "AAAAAAAAAA"
       prompt = TTY::Prompt.new
       loop do
         clear_screen

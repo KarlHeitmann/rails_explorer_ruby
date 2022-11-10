@@ -23,7 +23,7 @@ def green(text)
 end
 
 def clear_screen
-  puts "\e[H\e[2J"
+  print "\e[H\e[2J"
 end
 
 def run
