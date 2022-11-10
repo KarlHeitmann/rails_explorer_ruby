@@ -64,14 +64,10 @@ module Explorer
       nodes.each_with_index do |node, i|
         file_name = node.name_file.gsub(@explorer_data[:prefix], '')
         text_to_display << file_name << "\n"
-        # choices << { name: node.name_file, value: i + 1}
         choices << { name: file_name, value: i + 0 }
       end
       choices << { name: 'Quit', value: 'q' }
-      # title = @explorer_data[:search_term]
       title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
-      # puts title
-      # box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: title, bottom_right: "v1.0"}) { text_to_display }
       [TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: title) { text_to_display }, choices]
     end
 
@@ -105,12 +101,6 @@ module Explorer
         ]
         option = prompt.enum_select("====> Select an option for #{complete_file_name}", choices)  
         unless option == 'q'
-=begin
-          explorer_child_data = {
-            search_term: "render.*#{file_name.split('.').first[1..]}",
-            path: @explorer_data[:path]
-          }
-=end
           explorer_child_data = @explorer_data
           explorer_child_data[:search_term] = "render.*#{file_name.split('.').first[1..]}"
           explorer_child = Nodes.new(explorer_data: explorer_child_data)
@@ -120,28 +110,21 @@ module Explorer
     end
 
     def rg_launch
-      # lines = io.getCmdData(cmd).split("\n")
       cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
-      # puts @explorer_data[:search_term].inspect
-      # puts cmd.join
       @io.getCmdData(cmd).split("\n")
     end
 
     def autopilot
-      # box, choices = summary_box_and_filenames_choices
       choices = filenames_filtered.map.with_index { { name: _1, value: _2 } }
       max_height = choices.size
-      # print box
       prompt = TTY::Prompt.new
       clear_screen
       loop do
-        # option = prompt.enum_select('Select an option', choices)
         option = prompt.enum_select('Select an option', choices + [{ name: 'Quit', value: 'q' }])
         clear_screen
         break if option == 'q'
 
-        text_detail = @nodes[option].matches(screen_width) # XXX Here we get the text to print in the right box below
-        # detail = TTY::Box.frame(top: 0, left: 31, width: screen_width - 32, height: max_height + 2) { text_detail }
+        text_detail = @nodes[option].matches(screen_width)
         detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2) { text_detail }
         print detail
 
@@ -178,25 +161,14 @@ module Explorer
         choices = [
           { name: 'Explore', value: 1 },
           { name: 'Filter', value: 2 },
-          { name: 'View summary', value: 3 },
-          { name: 'Take action', value: 4 },
           { name: 'Quit', value: 'q' }
         ]
         option = prompt.enum_select('Select an option', choices)
-        # puts "option: #{option.inspect}"
         case option
         when 1
           autopilot
         when 2
           box = input_filter(prompt)
-        when 3
-          @nodes.each do |node|
-            puts node.summary
-          end
-        when 4
-          @nodes.each do |node|
-            puts node.action
-          end
         else
           break
         end
