@@ -56,7 +56,7 @@ module Explorer
       # @columns = TTY::Screen.columns
     end
 
-    def summary_box
+    def summary_box_and_filenames_choices
       # TODO: Adjust size of the box accordingly
       text_to_display = ''
       choices = []
@@ -72,7 +72,19 @@ module Explorer
       title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
       # puts title
       # box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: title, bottom_right: "v1.0"}) { text_to_display }
-      [choices, TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: title) { text_to_display }]
+      [TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: title) { text_to_display }, choices]
+    end
+
+    def summary_box
+      # TODO: Adjust size of the box accordingly
+      text_to_display = ''
+      nodes = @nodes.filter { _1.name_file.include? @filter }
+      nodes.each_with_index do |node, i|
+        file_name = node.name_file.gsub(@explorer_data[:prefix], '')
+        text_to_display << file_name << "\n"
+      end
+      title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
+      TTY::Box.frame(top: 0, width: 30, height: nodes.size + 2, title: title) { text_to_display }
     end
 
     def individual_action(option)
@@ -110,7 +122,7 @@ module Explorer
     end
 
     def autopilot
-      choices, box = summary_box
+      box, choices = summary_box_and_filenames_choices
       max_height = choices.size
       clear_screen
       print box
@@ -136,8 +148,9 @@ module Explorer
 
     def input_filter(prompt)
       @filter = ''
+      box = nil
       loop do
-        _, box = summary_box
+        box = summary_box
         clear_screen
         print box
         c = prompt.keypress("> #{@filter}:")
@@ -153,13 +166,11 @@ module Explorer
     end
 
     def menu
-      _, box = summary_box
+      box = summary_box
       puts "AAAAAAAAAA"
       prompt = TTY::Prompt.new
-      box = TTY::Box.frame(width: 30, height: 10) do
-        "Drawin a box in terminal emulator"
-      end
       loop do
+        clear_screen
         print box
         choices = [
           { name: 'Explore', value: 1 },
@@ -174,15 +185,7 @@ module Explorer
         when 1
           autopilot
         when 2
-          # puts @nodes.reduce('') { _1 + _2.to_s }
-          puts "Introduce the filter"
-          # c = prompt.keypress("> ")
-          # puts c.inspect
-          # puts "BINGO \\r" if c == "\r"
-          # puts "BINGO \\n" if c == "\n"
-          @filter, box = input_filter(prompt)
-          #_, new_box = summary_box
-          # box = new_box
+          box = input_filter(prompt)
         when 3
           @nodes.each do |node|
             puts node.summary
