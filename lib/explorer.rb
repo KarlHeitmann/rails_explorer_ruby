@@ -46,6 +46,7 @@ module Explorer
       # @autopilot = autopilot
       @io = IOUtils.new
       @explorer_data = explorer_data
+      @filter = ''
       puts ':::::::'
       puts @explorer_data.inspect
       # 1/0
@@ -59,7 +60,8 @@ module Explorer
       # TODO: Adjust size of the box accordingly
       text_to_display = ''
       choices = []
-      @nodes.each_with_index do |node, i|
+      nodes = @nodes.filter { _1.name_file.include? @filter }
+      nodes.each_with_index do |node, i|
         file_name = node.name_file.gsub(@explorer_data[:prefix], '')
         text_to_display << file_name << "\n"
         # choices << { name: node.name_file, value: i + 1}
@@ -132,16 +134,36 @@ module Explorer
       end
     end
 
+    def input_filter(prompt)
+      @filter = ''
+      loop do
+        _, box = summary_box
+        clear_screen
+        print box
+        c = prompt.keypress("> #{@filter}:")
+        break if c == "\r"
+
+        if c == "\u007F" # This is a backspace
+          @filter = @filter[0...-1]
+          next
+        end
+        @filter << c
+      end
+      box
+    end
+
     def menu
+      _, box = summary_box
       puts "AAAAAAAAAA"
       prompt = TTY::Prompt.new
       box = TTY::Box.frame(width: 30, height: 10) do
         "Drawin a box in terminal emulator"
       end
       loop do
+        print box
         choices = [
-          { name: 'Autopilot', value: 1 },
-          { name: 'View names of files', value: 2 },
+          { name: 'Explore', value: 1 },
+          { name: 'Filter', value: 2 },
           { name: 'View summary', value: 3 },
           { name: 'Take action', value: 4 },
           { name: 'Quit', value: 'q' }
@@ -153,9 +175,14 @@ module Explorer
           autopilot
         when 2
           # puts @nodes.reduce('') { _1 + _2.to_s }
-          @nodes.each do |node|
-            puts node.name_file
-          end
+          puts "Introduce the filter"
+          # c = prompt.keypress("> ")
+          # puts c.inspect
+          # puts "BINGO \\r" if c == "\r"
+          # puts "BINGO \\n" if c == "\n"
+          @filter, box = input_filter(prompt)
+          #_, new_box = summary_box
+          # box = new_box
         when 3
           @nodes.each do |node|
             puts node.summary
