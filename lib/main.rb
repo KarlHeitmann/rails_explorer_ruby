@@ -14,9 +14,13 @@ def colorize(text, color_code)
   "\e[#{color_code}m#{text}\e[0m"
 end
 
-def red(text); colorize(text, 31); end
-def green(text); colorize(text, 32); end
+def red(text)
+  colorize(text, 31)
+end
 
+def green(text)
+  colorize(text, 32)
+end
 
 def clear_screen
   puts "\e[H\e[2J"
@@ -27,20 +31,21 @@ def run
   cmd = Command.new
   cmd.parse
   cmd.run
-  puts cmd.params
   # puts cmd.help
-  puts cmd.params[:autopilot]
+  # puts cmd.params[:autopilot]
+  # Sample XXX This changes whenever I modify Command class
+  # cmd = {:quick=>false,
+  #  :help=>false,
+  #  :autopilot=>false,
+  #  :restart=>"no",
+  #  :search_term=>"form",
+  #  :path=>"../best-github-notifications/",
+  #  :command=>nil}
+  explorer_data = cmd.params.to_h.slice(:prefix, :search_term, :autopilot, :quick, :path)
+  nodes = Explorer::Nodes.new(explorer_data: explorer_data)
   if cmd.params[:autopilot]
-    autopilot = cmd.params[:autopilot]
-    quick = cmd.params[:quick]
-    search_term = 'run'
-    path = cmd.params[:path]
-    explorer_data = { autopilot: autopilot, search_term: search_term, quick: quick, path: path }
-    nodes = Explorer::Nodes.new(explorer_data: explorer_data)
     nodes.autopilot
   else
-    explorer_data = { autopilot: autopilot, search_term: cmd.params[:search_term], quick: quick, path: cmd.params[:path] }
-    nodes = Explorer::Nodes.new(explorer_data: explorer_data)
     nodes.menu # TODO: Refactor to run
   end
 end

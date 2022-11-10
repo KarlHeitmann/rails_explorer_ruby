@@ -1,6 +1,7 @@
 require_relative 'explorer/node'
 
 module Explorer
+  # Helper class to deal with IO
   class IOUtils
     def getCmdData(cmd)
       io = IO.popen(cmd)
@@ -11,6 +12,7 @@ module Explorer
     end
   end
 
+  # Main Nodes for explorer class
   class Nodes
     def self.tty_screen_width
       # puts "bla bla bla"
@@ -21,61 +23,60 @@ module Explorer
       @screen_width ||= self.class.tty_screen_width
     end
 
+    def parse_data(lines, aux = [], grouped_lines = [])
+      lines.each do |line_string|
+        line = JSON.parse line_string
+        # t = line['type']
+        if %w[begin match].include? line['type']
+          aux << line
+        elsif line['type'] == 'summary'
+          @summary = line['data']
+        elsif line['type'] == 'end'
+          aux << line
+          grouped_lines << aux
+          aux = []
+        else
+          1 / 0
+        end
+      end
+      grouped_lines
+    end
+
     def initialize(explorer_data:)
       # @autopilot = autopilot
       @io = IOUtils.new
       @explorer_data = explorer_data
-      grouped_lines = []
-      aux = []
-      puts ":::::::"
+      puts ':::::::'
       puts @explorer_data.inspect
       # 1/0
       lines = rg_launch
-      lines.each do |line_string|
-        line = JSON.parse line_string
-        case line['type']
-        when 'begin'
-          aux << line
-        when 'match'
-          aux << line
-        when 'end'
-          aux << line
-          grouped_lines << aux
-          aux = []
-        when 'summary'
-          # @summary = Summary.new(line['data'])
-          @summary = line['data']
-        else
-          # puts line
-          1 / 0
-        end
-      end
+      grouped_lines = parse_data(lines)
       @nodes = grouped_lines.map { Node.new(_1, explorer_data: explorer_data) }
       # @columns = TTY::Screen.columns
     end
 
     def summary_box
+      # TODO: Adjust size of the box accordingly
       text_to_display = ''
       choices = []
       @nodes.each_with_index do |node, i|
-        text_to_display << node.name_file << "\n"
+        file_name = node.name_file.gsub(@explorer_data[:prefix], '')
+        text_to_display << file_name << "\n"
         # choices << { name: node.name_file, value: i + 1}
-        choices << { name: node.name_file, value: i + 0}
+        choices << { name: file_name, value: i + 0 }
       end
       choices << { name: 'Quit', value: 'q' }
-      title = @explorer_data[:search_term]
-      puts title
-      box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: title, bottom_right: "v1.0"}) { text_to_display }
-      # box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: "TITLE", bottom_right: "v1.0"}) { text_to_display }
-      # box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: @explorer_data[:search_term], bottom_right: "v1.0"}) { text_to_display }
-      # { choices: choices, box: box }
-      [ choices, box ]
+      # title = @explorer_data[:search_term]
+      title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
+      # puts title
+      # box = TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: {top_left: title, bottom_right: "v1.0"}) { text_to_display }
+      [choices, TTY::Box.frame(top: 0, width: 30, height: choices.size + 2, title: title) { text_to_display }]
     end
 
     def individual_action(option)
       complete_file_name = @nodes[option].name_file
       file_name = complete_file_name.split('/')[-1]
-      if (file_name[0] == '_') and (file_name[-3..] == 'erb')
+      if (file_name[0] == '_') && (file_name[-3..] == 'erb')
         clear_screen
         prompt = TTY::Prompt.new
         choices = [
