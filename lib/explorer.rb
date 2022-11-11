@@ -92,21 +92,21 @@ module Explorer
     def individual_action(option)
       complete_file_name = @nodes[option].name_file
       file_name = complete_file_name.split('/')[-1]
-      if (file_name[0] == '_') && (file_name[-3..] == 'erb')
-        clear_screen
-        prompt = TTY::Prompt.new
-        choices = [
-          { name: file_name, value: 1 },
-          { name: "Quite", value: 'q' },
-        ]
-        option = prompt.enum_select("====> Select an option for #{complete_file_name}", choices)  
-        unless option == 'q'
-          explorer_child_data = @explorer_data
-          explorer_child_data[:search_term] = "render.*#{file_name.split('.').first[1..]}"
-          explorer_child = Nodes.new(explorer_data: explorer_child_data)
-          explorer_child.menu
-        end
-      end
+      return unless (file_name[0] == '_') && (file_name[-3..] == 'erb')
+
+      clear_screen
+      prompt = TTY::Prompt.new
+      choices = [
+        { name: file_name, value: 1 },
+        { name: 'Quit', value: 'q' },
+      ]
+      option = prompt.enum_select("====> Select an option for #{complete_file_name}", choices)  
+      return if option == 'q'
+
+      explorer_child_data = @explorer_data
+      explorer_child_data[:search_term] = "render.*#{file_name.split('.').first[1..]}"
+      explorer_child = Nodes.new(explorer_data: explorer_child_data)
+      explorer_child.menu
     end
 
     def rg_launch
@@ -114,7 +114,7 @@ module Explorer
       @io.getCmdData(cmd).split("\n")
     end
 
-    def autopilot
+    def explore
       choices = filenames_filtered.map.with_index { { name: _1, value: _2 } }
       max_height = choices.size
       prompt = TTY::Prompt.new
@@ -166,7 +166,7 @@ module Explorer
         option = prompt.enum_select('Select an option', choices)
         case option
         when 1
-          autopilot
+          explore
         when 2
           box = input_filter(prompt)
         else
