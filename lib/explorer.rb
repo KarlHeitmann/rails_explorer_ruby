@@ -15,7 +15,6 @@ module Explorer
   # Main Nodes for explorer class
   class Nodes
     def self.tty_screen_width
-      # puts "bla bla bla"
       TTY::Screen.columns
     end
 
@@ -26,7 +25,6 @@ module Explorer
     def parse_data(lines, aux = [], grouped_lines = [])
       lines.each do |line_string|
         line = JSON.parse line_string
-        # t = line['type']
         if %w[begin context match].include? line['type']
           aux << line
         elsif line['type'] == 'summary'
@@ -43,17 +41,13 @@ module Explorer
     end
 
     def initialize(explorer_data:)
-      # @autopilot = autopilot
       @io = IOUtils.new
       @explorer_data = explorer_data
       @filter = ''
-      puts ':::::::'
-      puts @explorer_data.inspect
-      # 1/0
+      @prompt = TTY::Prompt.new
       lines = rg_launch
       grouped_lines = parse_data(lines)
       @nodes = grouped_lines.map { Node.new(_1, explorer_data: explorer_data) }
-      # @columns = TTY::Screen.columns
     end
 
     def summary_box_and_filenames_choices
@@ -83,11 +77,9 @@ module Explorer
       nodes = @nodes.filter { _1.name_file.include? @filter }
       nodes.each do |node|
         file_name = node.name_file.gsub(@explorer_data[:prefix], '')
-        # text_to_display << "#{node.matches_count}:#{file_name}\n"
         text_to_display << "#{file_name}:#{node.matches_count}\n"
       end
       title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
-      # TTY::Box.frame(top: 0, width: 30, height: nodes.size + 2, title: title) { text_to_display }
       TTY::Box.frame(top: 0, height: nodes.size + 2, title: title) { text_to_display }
     end
 
@@ -97,12 +89,11 @@ module Explorer
       return unless (file_name[0] == '_') && (file_name[-3..] == 'erb')
 
       clear_screen
-      prompt = TTY::Prompt.new
       choices = [
         { name: file_name, value: 1 },
         { name: 'Quit', value: 'q' },
       ]
-      option = prompt.enum_select("====> Select an option for #{complete_file_name}", choices)  
+      option = @prompt.enum_select("====> Select an option for #{complete_file_name}", choices)  
       return if option == 'q'
 
       explorer_child_data = @explorer_data
@@ -119,35 +110,30 @@ module Explorer
 
     def explore
       choices = filenames_filtered.map.with_index { { name: _1, value: _2 } }
-      # max_height = choices.size
-      prompt = TTY::Prompt.new
       clear_screen
       loop do
-        option = prompt.enum_select('Select an option', choices + [{ name: 'Quit', value: 'q' }])
+        option = @prompt.enum_select('Select an option', choices + [{ name: 'Quit', value: 'q' }])
         clear_screen
         break if option == 'q'
 
         text_detail = @nodes[option].matches
         max_height = [choices.size, text_detail.count("\n")].max
-        # title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
         title = { top_left: " #{@nodes[option].name_file} " }
-        # binding.pry
         detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2, title: title) { text_detail }
         print detail
 
-        # max_height = [choices.size, text_detail.count("\n")].max
         individual_action(option) unless @explorer_data[:quick]
       end
     end
 
-    def input_filter(prompt)
+    def input_filter
       @filter = ''
       box = nil
       loop do
         box = summary_box
         clear_screen
         print box
-        c = prompt.keypress("> #{@filter}:")
+        c = @prompt.keypress("> #{@filter}:")
         break if c == "\r"
 
         if c == "\u007F" # This is a backspace
@@ -161,7 +147,6 @@ module Explorer
 
     def menu
       box = summary_box
-      prompt = TTY::Prompt.new
       loop do
         clear_screen
         print box
@@ -170,12 +155,12 @@ module Explorer
           { name: 'Filter', value: 2 },
           { name: 'Quit', value: 'q' }
         ]
-        option = prompt.enum_select('Select an option', choices)
+        option = @prompt.enum_select('Select an option', choices)
         case option
         when 1
           explore
         when 2
-          box = input_filter(prompt)
+          box = input_filter
         else
           break
         end
