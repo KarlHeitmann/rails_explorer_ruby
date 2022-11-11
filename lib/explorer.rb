@@ -74,7 +74,7 @@ module Explorer
     def filenames_filtered
       @nodes
         .filter { _1.name_file.include? @filter }
-        .map { _1.name_file.gsub(@explorer_data[:prefix], '') }
+        .map { "#{_1.name_file.gsub(@explorer_data[:prefix], '')}:#{_1.matches_count}" }
     end
 
     def summary_box
@@ -82,11 +82,14 @@ module Explorer
       text_to_display = ''
       nodes = @nodes.filter { _1.name_file.include? @filter }
       nodes.each do |node|
+        # binding.pry
         file_name = node.name_file.gsub(@explorer_data[:prefix], '')
-        text_to_display << file_name << "\n"
+        # text_to_display << "#{node.matches_count}:#{file_name}\n"
+        text_to_display << "#{file_name}:#{node.matches_count}\n"
       end
       title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
-      TTY::Box.frame(top: 0, width: 30, height: nodes.size + 2, title: title) { text_to_display }
+      # TTY::Box.frame(top: 0, width: 30, height: nodes.size + 2, title: title) { text_to_display }
+      TTY::Box.frame(top: 0, height: nodes.size + 2, title: title) { text_to_display }
     end
 
     def individual_action(option)
@@ -124,7 +127,7 @@ module Explorer
         clear_screen
         break if option == 'q'
 
-        text_detail = @nodes[option].matches(screen_width)
+        text_detail = @nodes[option].matches
         detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2) { text_detail }
         print detail
 

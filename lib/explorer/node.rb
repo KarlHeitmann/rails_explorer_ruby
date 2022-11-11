@@ -33,10 +33,16 @@ module Explorer
       @begin_data.file_name
     end
 
-    def matches(size)
+    # @return [Integer]
+    def matches_count
+      @matches.count
+    end
+
+    # @return [String]
+    def matches
       # puts @matches[0].display_all
       # @matches.reduce('') { _1 + red(_2.display_all) + "-------\n" }
-      @matches.reduce('') { _1 + _2.display_all + "\n" }
+      @matches.reduce('') { "#{_1}#{_2.display_all}\n" }
     end
 
     def summary

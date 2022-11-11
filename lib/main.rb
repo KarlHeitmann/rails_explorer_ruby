@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'pry'
 require_relative 'command'
 require_relative 'explorer'
 # require_relative 'node'
