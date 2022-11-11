@@ -93,7 +93,7 @@ module Explorer
         { name: "Spawn explorer to search >>\"#{plugin_rails_command}\"<<", value: 1 },
         { name: 'Return', value: 'q' },
       ]
-      option = @prompt.enum_select("====> Select an option for #{complete_file_name}", choices)  
+      option = @prompt.enum_select("INDIVIDUAL ACTION #{complete_file_name}", choices)  
       return if option == 'q'
 
       explorer_child_data = @explorer_data
@@ -112,7 +112,7 @@ module Explorer
       choices = filenames_filtered.map.with_index { { name: _1, value: _2 } }
       clear_screen
       loop do
-        option = @prompt.enum_select('Select an option', choices + [{ name: 'Quit', value: 'q' }])
+        option = @prompt.enum_select('EXPLORE', choices + [{ name: 'Quit', value: 'q' }])
         clear_screen
         break if option == 'q'
 
@@ -155,7 +155,7 @@ module Explorer
           { name: 'Filter', value: 2 },
           { name: 'Quit', value: 'q' }
         ]
-        option = @prompt.enum_select('Select an option', choices)
+        option = @prompt.enum_select('MAIN MENU', choices)
         case option
         when 1
           explore
