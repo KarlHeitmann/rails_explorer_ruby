@@ -129,7 +129,10 @@ module Explorer
 
         text_detail = @nodes[option].matches
         max_height = [choices.size, text_detail.count("\n")].max
-        detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2) { text_detail }
+        # title = { top_left: @explorer_data[:search_term], bottom_right: @explorer_data[:path] }
+        title = { top_left: " #{@nodes[option].name_file} " }
+        # binding.pry
+        detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2, title: title) { text_detail }
         print detail
 
         # max_height = [choices.size, text_detail.count("\n")].max

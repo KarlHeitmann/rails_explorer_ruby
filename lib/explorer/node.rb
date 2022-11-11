@@ -29,6 +29,7 @@ module Explorer
       VERBOSE
     end
 
+    # @return [String]
     def name_file
       # "@begin_data = #{@begin_data.inspect}\n@matches = #{@matches.inspect}\n@end_data = #{@end_data.inspect}"
       # @begin_data['path']['text']

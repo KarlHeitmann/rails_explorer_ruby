@@ -46,7 +46,7 @@ module Explorer
 
       def display_all
         line = @data['lines']['text']
-        output = ''
+        output = "#{@data['line_number']}:"
         start = 0
         @data['submatches'].each do |submatch|
           output << line[start...submatch['start']]
@@ -96,7 +96,7 @@ module Explorer
     class Context < DataMatch
       # @return String
       def display_all
-        @data['lines']['text']
+        "#{@data['line_number']}:#{@data['lines']['text']}"
       end
     end
 
