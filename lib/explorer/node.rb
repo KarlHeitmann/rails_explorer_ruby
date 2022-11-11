@@ -13,6 +13,8 @@ module Explorer
         case match['type']
         when 'begin'
           @begin_data = Begin.new(match['data'], explorer_data: explorer_data)
+        when 'context'
+          @matches << Context.new(match['data'], explorer_data: explorer_data)
         when 'match'
           @matches << Match.new(match['data'], explorer_data: explorer_data)
         when 'end'
@@ -35,14 +37,14 @@ module Explorer
 
     # @return [Integer]
     def matches_count
-      @matches.count
+      @end_data.matches
     end
 
     # @return [String]
     def matches
       # puts @matches[0].display_all
       # @matches.reduce('') { _1 + red(_2.display_all) + "-------\n" }
-      @matches.reduce('') { "#{_1}#{_2.display_all}\n" }
+      @matches.reduce('') { "#{_1}#{_2.display_all}" }
     end
 
     def summary

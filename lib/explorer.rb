@@ -27,7 +27,7 @@ module Explorer
       lines.each do |line_string|
         line = JSON.parse line_string
         # t = line['type']
-        if %w[begin match].include? line['type']
+        if %w[begin context match].include? line['type']
           aux << line
         elsif line['type'] == 'summary'
           @summary = line['data']
@@ -82,7 +82,6 @@ module Explorer
       text_to_display = ''
       nodes = @nodes.filter { _1.name_file.include? @filter }
       nodes.each do |node|
-        # binding.pry
         file_name = node.name_file.gsub(@explorer_data[:prefix], '')
         # text_to_display << "#{node.matches_count}:#{file_name}\n"
         text_to_display << "#{file_name}:#{node.matches_count}\n"
@@ -113,13 +112,14 @@ module Explorer
     end
 
     def rg_launch
-      cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
+      # cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
+      cmd = "rg #{@explorer_data[:search_term]} #{@explorer_data[:path]} -A 2 -B 2 --json".split
       @io.getCmdData(cmd).split("\n")
     end
 
     def explore
       choices = filenames_filtered.map.with_index { { name: _1, value: _2 } }
-      max_height = choices.size
+      # max_height = choices.size
       prompt = TTY::Prompt.new
       clear_screen
       loop do
@@ -128,10 +128,11 @@ module Explorer
         break if option == 'q'
 
         text_detail = @nodes[option].matches
+        max_height = [choices.size, text_detail.count("\n")].max
         detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2) { text_detail }
         print detail
 
-        max_height = [choices.size, text_detail.count("\n") - 1].max
+        # max_height = [choices.size, text_detail.count("\n")].max
         individual_action(option) unless @explorer_data[:quick]
       end
     end
