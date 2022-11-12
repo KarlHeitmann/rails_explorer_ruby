@@ -35,6 +35,11 @@ class Command
     desc 'The command to run inside the image'
   end
 
+  keyword :spanlines do
+    default "2"
+    desc 'Prefix to erase on files window'
+  end
+
   keyword :prefix do
     default ''
     desc 'Prefix to erase on files window'

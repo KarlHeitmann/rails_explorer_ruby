@@ -14,6 +14,11 @@ module Explorer
 
   # Main Nodes for explorer class
   class Nodes
+    UP_ARROW = "\e[A"
+    RIGHT_ARROW = "\e[C"
+    DOWN_ARROW = "\e[B"
+    LEFT_ARROW = "\e[D"
+
     def self.tty_screen_width
       TTY::Screen.columns
     end
@@ -104,23 +109,53 @@ module Explorer
 
     def rg_launch
       # cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
-      cmd = "rg #{@explorer_data[:search_term]} #{@explorer_data[:path]} -A 2 -B 2 --json".split
+      cmd = "rg #{@explorer_data[:search_term]} #{@explorer_data[:path]} -A #{@explorer_data[:spanlines]} -B #{@explorer_data[:spanlines]} --json".split
       @io.getCmdData(cmd).split("\n")
+    end
+
+    def explore_menu(choices, selected = nil)
+      unless selected.nil?
+        loop do
+          c = @prompt.keypress("> #{@filter}:")
+          case c
+          when UP_ARROW
+            @nodes[selected].span_lines += 1 if @nodes[selected].span_lines < @explorer_data[:spanlines].to_i
+          when RIGHT_ARROW
+            @nodes[selected].span_lines += 1 if @nodes[selected].span_lines < @explorer_data[:spanlines].to_i
+          when DOWN_ARROW
+            @nodes[selected].span_lines -= 1 if @nodes[selected].span_lines.positive?
+          when LEFT_ARROW
+            @nodes[selected].span_lines -= 1 if @nodes[selected].span_lines.positive?
+          else
+            break
+          end
+
+          draw_file_matches(choices, selected)
+        end
+      end
+
+      @prompt.enum_select('EXPLORE', choices + [{ name: 'Quit', value: 'q' }])
+    end
+
+    def draw_file_matches(choices, option)
+      clear_screen
+      text_detail = @nodes[option].matches
+      max_height = [choices.size, text_detail.count("\n")].max
+      title = { top_left: " #{@nodes[option].name_file} " }
+      detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2, title: title) { text_detail }
+      print detail
     end
 
     def explore
       choices = filenames_filtered.map.with_index { { name: _1, value: _2 } }
       clear_screen
+      option = nil
       loop do
-        option = @prompt.enum_select('EXPLORE', choices + [{ name: 'Quit', value: 'q' }])
-        clear_screen
+        option = explore_menu(choices, option)
+        # clear_screen
         break if option == 'q'
 
-        text_detail = @nodes[option].matches
-        max_height = [choices.size, text_detail.count("\n")].max
-        title = { top_left: " #{@nodes[option].name_file} " }
-        detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2, title: title) { text_detail }
-        print detail
+        draw_file_matches(choices, option)
 
         individual_action(option) unless @explorer_data[:quick]
       end
@@ -160,7 +195,7 @@ module Explorer
         when 1
           explore
         when 2
-          box = input_filter
+          box = input_filter # Alternative use tty-prompt filter: https://github.com/piotrmurach/tty-prompt#2627-filter
         else
           break
         end

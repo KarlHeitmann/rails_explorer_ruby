@@ -5,9 +5,13 @@ require_relative 'node/data'
 # Node models a match from rg --json
 module Explorer
   class Node
+    # attr_writer :span_lines
+    attr_accessor :span_lines
+
     def initialize(matches, explorer_data: )
       @matches = []
       @explorer_data = explorer_data
+      @span_lines = explorer_data[:spanlines].to_i
 
       matches.each do |match|
         case match['type']
@@ -43,9 +47,10 @@ module Explorer
 
     # @return [String]
     def matches
-      # puts @matches[0].display_all
-      # @matches.reduce('') { _1 + red(_2.display_all) + "-------\n" }
-      @matches.reduce('') { "#{_1}#{_2.display_all}" }
+      # i_match = @matches.index { _1.class == Match}
+      i_match = @matches.index { _1.instance_of?(Match)}
+      ms = @matches[(i_match - @span_lines)..(i_match + @span_lines)]
+      ms.reduce('') { "#{_1}#{_2.display_all}" }
     end
 
     def summary

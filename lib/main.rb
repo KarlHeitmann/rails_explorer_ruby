@@ -42,7 +42,7 @@ def run
   #  :search_term=>"form",
   #  :path=>"../best-github-notifications/",
   #  :command=>nil}
-  explorer_data = cmd.params.to_h.slice(:prefix, :search_term, :autopilot, :quick, :path)
+  explorer_data = cmd.params.to_h.slice(:spanlines, :prefix, :search_term, :autopilot, :quick, :path)
   nodes = Explorer::Nodes.new(explorer_data: explorer_data)
   if cmd.params[:autopilot]
     nodes.autopilot
