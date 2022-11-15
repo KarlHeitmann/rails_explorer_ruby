@@ -226,7 +226,8 @@ module Explorer
           r = @prompt.ask('Enter search pattern').chomp
           puts r.inspect
           explorer_child_data[:search_term] = r
-          explorer_child_data[:subcommand_files] = @nodes.map { _1.name_file }
+          explorer_child_data[:subcommand_files] = @nodes.filter { _1.name_file.include? @filter }.map { _1.name_file }
+          # total_matches = @nodes.filter { _1.name_file.include? @filter }.count
           explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd)
           # explorer_child.subcommand
           explorer_child.menu
