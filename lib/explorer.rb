@@ -122,14 +122,19 @@ module Explorer
 
     def rg_launch
       # cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
-      cmd = "rg #{@explorer_data[:search_term]} #{@explorer_data[:path]} -A #{@explorer_data[:spanlines]} -B #{@explorer_data[:spanlines]} --json".split
+      if @explorer_data[:subcommand_files].nil? # TODO # XXX Change nil check by initializing subcommand_files key as empty array []
+        cmd = "rg #{@explorer_data[:search_term]} #{@explorer_data[:path]} -A #{@explorer_data[:spanlines]} -B #{@explorer_data[:spanlines]} --json".split
+      else
+        # cmd = "rg #{@explorer_data[:search_term]} #{@nodes.reduce('') { _1 + ' ' + _2.name_file }} -A #{@explorer_data[:spanlines]} -B #{@explorer_data[:spanlines]} --json".split
+        cmd = "rg #{@explorer_data[:search_term]} #{@explorer_data[:subcommand_files].reduce('') { "#{_1} #{_2}" }} -A #{@explorer_data[:spanlines]} -B #{@explorer_data[:spanlines]} --json".split
+      end
       @io.getCmdData(cmd).split("\n")
     end
 
     def explore_menu(choices, selected = nil)
       unless selected.nil?
         loop do
-          c = @prompt.keypress("> #{@filter}:")
+          c = @prompt.keypress('> Arrows to span more/less lines, any other key to continue:')
           case c
           when UP_ARROW
             @nodes[selected].span_lines += 1 if @nodes[selected].span_lines < @explorer_data[:spanlines].to_i
@@ -203,18 +208,36 @@ module Explorer
         choices = [
           { name: 'Explore', value: 1 },
           { name: 'Filter', value: 2 },
+          { name: 'Run ripgrep over matched files (apply filter)', value: 3 },
           { name: 'Quit', value: 'q' }
         ]
-        option = @prompt.enum_select('MAIN MENU', choices)
+
+        total_matches = @nodes.filter { _1.name_file.include? @filter }.count
+        option = @prompt.enum_select("MAIN MENU\nTotal files with matches: #{total_matches}", choices)
         case option
         when 1
           explore
         when 2
           box = input_filter # Alternative use tty-prompt filter: https://github.com/piotrmurach/tty-prompt#2627-filter
+        when 3
+          pd = @previous_data
+          # search_pattern = @prompt.ask('Enter search pattern')
+          explorer_child_data = @explorer_data
+          r = @prompt.ask('Enter search pattern').chomp
+          puts r.inspect
+          explorer_child_data[:search_term] = r
+          explorer_child_data[:subcommand_files] = @nodes.map { _1.name_file }
+          explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd)
+          # explorer_child.subcommand
+          explorer_child.menu
+          break
         else
           break
         end
       end
+    end
+
+    def subcommand
     end
 
     def to_s
