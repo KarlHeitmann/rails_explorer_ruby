@@ -45,9 +45,10 @@ module Explorer
       grouped_lines
     end
 
-    def initialize(explorer_data:)
+    def initialize(explorer_data:, previous_data:)
       @io = IOUtils.new
       @explorer_data = explorer_data
+      @previous_data = previous_data
       @filter = ''
       @prompt = TTY::Prompt.new
       lines = rg_launch
@@ -103,7 +104,7 @@ module Explorer
 
       explorer_child_data = @explorer_data
       explorer_child_data[:search_term] = plugin_rails_command
-      explorer_child = Nodes.new(explorer_data: explorer_child_data)
+      explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: [])
       explorer_child.menu
     end
 
