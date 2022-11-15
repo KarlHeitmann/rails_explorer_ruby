@@ -56,6 +56,18 @@ module Explorer
       @nodes = grouped_lines.map { Node.new(_1, explorer_data: explorer_data) }
     end
 
+    def print_previous_data
+      text_previous_data = ''
+      @previous_data.each do |data|
+        text_previous_data += <<~TEXT_PREVIOUS_DATA
+          search_term: #{green(data[:search_term])}
+          path: #{green(data[:path])}
+        TEXT_PREVIOUS_DATA
+      end
+      title = { top_left: 'Previous data stack' }
+      print TTY::Box.frame(top: 0, title: title) { text_previous_data }
+    end
+
     def summary_box_and_filenames_choices
       # TODO: Adjust size of the box accordingly
       text_to_display = ''
@@ -152,6 +164,7 @@ module Explorer
       clear_screen
       option = nil
       loop do
+        print_previous_data
         option = explore_menu(choices, option)
         # clear_screen
         break if option == 'q'
@@ -185,6 +198,7 @@ module Explorer
       box = summary_box
       loop do
         clear_screen
+        print_previous_data
         print box
         choices = [
           { name: 'Explore', value: 1 },

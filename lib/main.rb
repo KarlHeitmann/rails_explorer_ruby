@@ -43,7 +43,8 @@ def run
   #  :path=>"../best-github-notifications/",
   #  :command=>nil}
   explorer_data = cmd.params.to_h.slice(:spanlines, :prefix, :search_term, :autopilot, :quick, :path)
-  nodes = Explorer::Nodes.new(explorer_data: explorer_data, previous_data: [])
+  previous_data = [{search_term: explorer_data[:search_term], path: explorer_data[:path]}]
+  nodes = Explorer::Nodes.new(explorer_data: explorer_data, previous_data: previous_data)
   if cmd.params[:autopilot]
     nodes.autopilot
   else
