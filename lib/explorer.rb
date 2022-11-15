@@ -230,7 +230,6 @@ module Explorer
           explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd)
           # explorer_child.subcommand
           explorer_child.menu
-          break
         else
           break
         end

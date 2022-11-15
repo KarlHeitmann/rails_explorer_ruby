@@ -45,12 +45,24 @@ module Explorer
       @end_data.matches
     end
 
+    def matches_iterative(ms)
+      # if there is no instance_of?(Match) inside block passed to #index, #index will return nil
+      # next_array = @matches[i_match+1..]
+
+      i_match = ms.index { _1.instance_of?(Match)}
+      if i_match.nil?
+        return ''
+      else
+        ms[(i_match - @span_lines)..(i_match + @span_lines)].reduce('') { "#{_1}#{_2.display_all}" } + ('-' * 10) + "\n" +  matches_iterative(ms[i_match+1..])
+      end
+    end
+
     # @return [String]
-    def matches
-      # i_match = @matches.index { _1.class == Match}
-      i_match = @matches.index { _1.instance_of?(Match)}
-      ms = @matches[(i_match - @span_lines)..(i_match + @span_lines)]
-      ms.reduce('') { "#{_1}#{_2.display_all}" }
+    def matches # TODO: change name for a better thing, node_details? this is a wrapper for matches_iterative method above
+      # i_match = @matches.index { _1.class == Match} # TODO: maybe put here a submenu with further action to do with submatches, like iterate over submatches, or pass another filter
+
+      temp = matches_iterative(@matches)
+      temp
     end
 
     def summary
