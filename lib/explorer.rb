@@ -120,6 +120,13 @@ module Explorer
       explorer_child.menu
     end
 
+    def rg_launch_raw(search_term, list_files)
+      # cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
+      # cmd = "rg #{search_term} #{list_files.reduce('') { "#{_1} #{_2}" }} -A #{@explorer_data[:spanlines]} -B #{@explorer_data[:spanlines]} --pretty".split
+      cmd = "rg #{search_term} #{list_files.reduce('') { "#{_1} #{_2}" }} --pretty".split
+      @io.getCmdData(cmd)
+    end
+
     def rg_launch
       # cmd = "rg #{@explorer_data[:search_term]} --json #{@explorer_data[:path]}".split
       if @explorer_data[:subcommand_files].nil? # TODO # XXX Change nil check by initializing subcommand_files key as empty array []
@@ -209,6 +216,7 @@ module Explorer
           { name: 'Explore', value: 1 },
           { name: 'Filter', value: 2 },
           { name: 'Run ripgrep over matched files (apply filter)', value: 3 },
+          { name: 'Run ripgrep raw over matches', value: 4 },
           { name: 'Quit', value: 'q' }
         ]
 
@@ -231,6 +239,10 @@ module Explorer
           explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd)
           # explorer_child.subcommand
           explorer_child.menu
+        when 4
+          search_term = @prompt.ask('Enter search term')
+          puts rg_launch_raw(search_term, @nodes.filter { _1.name_file.include? @filter }.map { _1.name_file })
+          @prompt.ask('Press any key to continue')
         else
           break
         end
