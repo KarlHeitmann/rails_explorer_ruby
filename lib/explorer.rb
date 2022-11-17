@@ -166,7 +166,7 @@ module Explorer
       clear_screen
       text_detail = @nodes[option].matches
       max_height = [choices.size, text_detail.count("\n")].max
-      title = { top_left: " #{@nodes[option].name_file} " }
+      title = { top_left: " #{@nodes[option].name_file}:#{@nodes[option].matches_count} " }
       detail = TTY::Box.frame(top: 0, width: screen_width, height: max_height + 2, title: title) { text_detail }
       print detail
     end
