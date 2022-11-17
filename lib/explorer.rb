@@ -62,6 +62,7 @@ module Explorer
         text_previous_data += <<~TEXT_PREVIOUS_DATA
           search_term: #{green(data[:search_term])}
           path: #{green(data[:path])}
+
         TEXT_PREVIOUS_DATA
       end
       title = { top_left: 'Previous data stack' }
@@ -116,7 +117,10 @@ module Explorer
 
       explorer_child_data = @explorer_data
       explorer_child_data[:search_term] = plugin_rails_command
-      explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: [])
+      new_data = {search_term: plugin_rails_command, path: @explorer_data[:path]}
+      pd = @previous_data.clone
+      pd << new_data
+      explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd)
       explorer_child.menu
     end
 
