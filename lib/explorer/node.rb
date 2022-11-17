@@ -53,7 +53,9 @@ module Explorer
       if i_match.nil?
         return ''
       else
-        ms[(i_match - @span_lines)..(i_match + @span_lines)].reduce('') { "#{_1}#{_2.display_all}" } + ('-' * 10) + "\n" +  matches_iterative(ms[i_match+1..])
+        begin_slice = (i_match - @span_lines).negative? ? 0 : i_match - @span_lines
+        end_slice = (i_match + @span_lines) >= ms.count ? -1 : i_match + @span_lines
+        ms[begin_slice..end_slice].reduce('') { "#{_1}#{_2.display_all}" } + ('-' * 10) + "\n" +  matches_iterative(ms[i_match+1..])
       end
     end
 
