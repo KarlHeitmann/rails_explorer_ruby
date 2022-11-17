@@ -5,14 +5,20 @@ require_relative 'node/data'
 # Node models a match from rg --json
 module Explorer
   class Node
+    # attr_writer :span_lines
+    attr_accessor :span_lines
+
     def initialize(matches, explorer_data: )
       @matches = []
       @explorer_data = explorer_data
+      @span_lines = explorer_data[:spanlines].to_i
 
       matches.each do |match|
         case match['type']
         when 'begin'
           @begin_data = Begin.new(match['data'], explorer_data: explorer_data)
+        when 'context'
+          @matches << Context.new(match['data'], explorer_data: explorer_data)
         when 'match'
           @matches << Match.new(match['data'], explorer_data: explorer_data)
         when 'end'
@@ -27,16 +33,38 @@ module Explorer
       VERBOSE
     end
 
+    # @return [String]
     def name_file
       # "@begin_data = #{@begin_data.inspect}\n@matches = #{@matches.inspect}\n@end_data = #{@end_data.inspect}"
       # @begin_data['path']['text']
       @begin_data.file_name
     end
 
-    def matches(size)
-      # puts @matches[0].display_all
-      # @matches.reduce('') { _1 + red(_2.display_all) + "-------\n" }
-      @matches.reduce('') { _1 + _2.display_all + "\n" }
+    # @return [Integer]
+    def matches_count
+      @end_data.matches
+    end
+
+    def matches_iterative(ms)
+      # if there is no instance_of?(Match) inside block passed to #index, #index will return nil
+      # next_array = @matches[i_match+1..]
+
+      i_match = ms.index { _1.instance_of?(Match)}
+      if i_match.nil?
+        return ''
+      else
+        begin_slice = (i_match - @span_lines).negative? ? 0 : i_match - @span_lines
+        end_slice = (i_match + @span_lines) >= ms.count ? -1 : i_match + @span_lines
+        ms[begin_slice..end_slice].reduce('') { "#{_1}#{_2.display_all}" } + ('-' * 10) + "\n" +  matches_iterative(ms[i_match+1..])
+      end
+    end
+
+    # @return [String]
+    def matches # TODO: change name for a better thing, node_details? this is a wrapper for matches_iterative method above
+      # i_match = @matches.index { _1.class == Match} # TODO: maybe put here a submenu with further action to do with submatches, like iterate over submatches, or pass another filter
+
+      temp = matches_iterative(@matches)
+      temp
     end
 
     def summary

@@ -45,29 +45,18 @@ module Explorer
       end
 
       def display_all
-        # @data['lines'].to_s
-        # ss = @data['lines']['text'].chomp.split(@explorer_data)
-        ss = @data['lines']['text'].split(@explorer_data[:search_term])
-        "#{(ss[0...-1].map { _1 + red(@explorer_data[:search_term]) } + [ss[-1]]).join}".chomp
-        # "#{ss[0...-1].map { _1 + @explorer_data }} + #{ss[-1])}".chomp
-
-        # "#{ss[0]}#{red(@explorer_data)}#{ss[1..].joins}"
-        # "#{ss[0]}#{red(@explorer_data)}#{ss[1..].empty? ? "" : ss[1..].join}"
-        # "#{@explorer_data}#{red(@data['lines']['text'].chomp)}"
+        line = @data['lines']['text']
+        output = "#{@data['line_number']}:"
+        start = 0
+        @data['submatches'].each do |submatch|
+          output << line[start...submatch['start']]
+          output << red(submatch['match']['text'])
+          start = submatch['end']
+        end
+        output << line[start..]
+        output
       end
-      #   def to_s
-      #     s = <<-STRING
-      #     \tMATCH
-      #     \t\tpath: #{@data['path']}
-      #     \t\tlines: #{@data['lines']}
-      #     \t\tline_number: #{@data['line_number']}
-      #     \t\tabsolute_offset: #{@data['absolute_offset']}
-      #     \t\tsubmatches: #{@data['submatches']}
-      #     STRING
-      #     # "type MATCH: #{@data}\n\t#{@data.keys}"
-      #     "type MATCH: #{@data.keys}"
-      #     s
-      #   end
+
     end
     # Begin
     # properties:
@@ -98,18 +87,17 @@ module Explorer
     # binary_offset
     # stats
     class End < DataMatch
-=begin
-      def to_s
-        s = <<-STRING
-        \tpath: #{@data['path']}
-        \tbinary_offset: #{@data['binary_offset']}
-        \tstats: #{@data['stats']}
-        STRING
-        # "type END: #{@data}\n\t#{@data.keys}"
-        "type END: #{@data.keys}"
-        s
+      def matches
+        @data['stats']['matches']
       end
-=end
+    end
+
+    # Context: data around the match when given argument -A n -B m
+    class Context < DataMatch
+      # @return String
+      def display_all
+        "#{@data['line_number']}:#{@data['lines']['text']}"
+      end
     end
 
     # Summary
