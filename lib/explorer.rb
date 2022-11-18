@@ -1,4 +1,5 @@
 require_relative 'explorer/node'
+require_relative 'explorer/plugins/rails_explorer'
 
 module Explorer
   # Helper class to deal with IO
@@ -45,10 +46,19 @@ module Explorer
       grouped_lines
     end
 
-    def initialize(explorer_data:, previous_data:)
+    def parse_configuration
+      if @configuration['plugins'].include? 'rails_explorer'
+        extend Explorer::Plugins::RailsExplorer
+      end
+    end
+
+    # def initialize(explorer_data:, previous_data:, configuration: nil)
+    def initialize(explorer_data:, previous_data:, configuration:)
       @io = IOUtils.new
       @explorer_data = explorer_data
       @previous_data = previous_data
+      @configuration = configuration
+      parse_configuration unless @configuration.nil?
       @filter = ''
       @prompt = TTY::Prompt.new
       lines = rg_launch
@@ -102,26 +112,8 @@ module Explorer
       TTY::Box.frame(top: 0, height: nodes.size + 2, title: title) { text_to_display }
     end
 
-    def individual_action(option)
-      complete_file_name = @nodes[option].name_file
-      file_name = complete_file_name.split('/')[-1]
-      return unless (file_name[0] == '_') && (file_name[-3..] == 'erb')
-
-      plugin_rails_command = "render.*#{file_name.split('.').first[1..]}" # TODO: Here we need to apply a plugin
-      choices = [
-        { name: "Spawn explorer to search >>\"#{plugin_rails_command}\"<<", value: 1 },
-        { name: 'Return', value: 'q' },
-      ]
-      option = @prompt.enum_select("INDIVIDUAL ACTION #{complete_file_name}", choices)  
-      return if option == 'q'
-
-      explorer_child_data = @explorer_data
-      explorer_child_data[:search_term] = plugin_rails_command
-      new_data = {search_term: plugin_rails_command, path: @explorer_data[:path]}
-      pd = @previous_data.clone
-      pd << new_data
-      explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd)
-      explorer_child.menu
+    def individual_action(_)
+      nil
     end
 
     def rg_launch_raw(search_term, list_files)
@@ -187,7 +179,8 @@ module Explorer
 
         draw_file_matches(choices, option)
 
-        individual_action(option) unless @explorer_data[:quick]
+        # individual_action(option) unless @explorer_data[:quick] # Deprecated parameter quick...
+        individual_action(option)
       end
     end
 
@@ -240,7 +233,7 @@ module Explorer
           explorer_child_data[:search_term] = r
           explorer_child_data[:subcommand_files] = @nodes.filter { _1.name_file.include? @filter }.map { _1.name_file }
           # total_matches = @nodes.filter { _1.name_file.include? @filter }.count
-          explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd)
+          explorer_child = Nodes.new(explorer_data: explorer_child_data, previous_data: pd, configuration: @configuration)
           # explorer_child.subcommand
           explorer_child.menu
         when 4

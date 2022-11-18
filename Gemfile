@@ -10,4 +10,9 @@ gem 'tty-option'
 gem 'tty-prompt'
 gem 'tty-screen'
 
+# gem "rubocop", "1.8", require: false
+#gem "rubocop", "1.5.2", require: false
+# gem "rubocop-performance", require: false  
+
 # gem "rails"
+
